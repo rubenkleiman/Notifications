@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="color-scheme" content="light dark">
+  <title>Safari notification test</title>
+  <style>
+    body {
+      font-family: -apple-system, system-ui, sans-serif;
+      max-width: 34rem;
+      margin: 3rem auto;
+      padding: 0 1rem;
+    }
+
+    button {
+      font-size: 1rem;
+      padding: .5rem 1rem;
+      margin: .25rem .25rem .25rem 0;
+    }
+
+    #log {
+      margin-top: 1rem;
+      white-space: pre-wrap;
+      font-family: ui-monospace, monospace;
+      font-size: .85rem;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Safari notification test</h1>
+  <p>1. Click <b>Allow notifications</b> and accept Safari's prompt.<br>
+    2. Click either test button. Each uses new text so macOS does not merge repeats.</p>
+
+  <button id="allow">Allow notifications</button><br>
+  <button id="sw">Send via service worker (closest to web push)</button><br>
+  <button id="plain">Send via Notification API</button>
+
+  <div class="form-group">
+    <label for="msg">Message Body:</label>
+    <input type="text" id="msg" placeholder="Enter message text...">
+  </div>
+
+  <div id="log"></div>
+
+  <script>
+    let n = 0;
+    const log = m => document.getElementById("log").textContent += m + "\n";
+
+    document.getElementById("allow").onclick = async () => {
+      const p = await Notification.requestPermission();
+      log("Permission: " + p);
+    };
+
+    // const titleEl = document.getElementById("title")
+    // const title = titleEl.textContent 
+
+    document.getElementById("sw").onclick = async () => {
+      try {
+        const bodyEl = document.getElementById("msg")
+        const body = bodyEl.value || "Hello from the service worker "
+        const reg = await navigator.serviceWorker.register("sw.js");
+        await navigator.serviceWorker.ready;
+        n++;
+        await reg.showNotification("Service Worker Test " + n, { body: body + " #" + n });
+        log("Sent service worker notification " + n);
+      } catch (e) { log("Error: " + e); }
+    };
+
+    document.getElementById("plain").onclick = () => {
+      try {
+        const bodyEl = document.getElementById("msg")
+        const body = bodyEl.value || "Hello from Notification API "
+        console.log(`Message: ${body}`)
+        n++;
+        new Notification("Notification API Test " + n, { body: body + " #" + n });
+        log("Sent plain notification " + n);
+      } catch (e) { log("Error: " + e); }
+    };
+
+    log("Current permission: " + Notification.permission);
+  </script>
+</body>
+
+</html>
