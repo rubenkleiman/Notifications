@@ -106,7 +106,7 @@ def edit(n):
     if n.matches(r"safe zone"):
         if n.matches(r"back in|entered|inside"):
             n.sound, n.subtitle = "shenah-in", "Shénah is inside"
-        elif n.matches(r"out|left|exited|outside"):
+        elif n.matches(r"out|left|exited"):
             n.sound, n.subtitle = "shenah-out", "Shénah is out"
         return
 
