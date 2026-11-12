@@ -24,12 +24,39 @@ import tempfile
 import time
 import traceback
 from collections import Counter
+from datetime import datetime
 
 DB_DIR = os.path.expanduser("~/Library/Group Containers/group.com.apple.usernoted/db2")
 POLL_SECONDS = 1.0
 MARK = "[Edited] "          # prefix on every edited title; prevents feedback loops
 DEFAULT_SOUND = "Frog"
 DEBUG = "--debug" in sys.argv
+
+LOG_FILE = "/tmp/notifier-interceptor.log"
+
+
+def timestamp():
+    """Current time as "<day> H:MM AM/PM", for example "Wed 3:45 PM" (hour not zero-padded)."""
+    now = datetime.now()
+    day = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")[now.weekday()]
+    return f"{day} {now.hour % 12 or 12}:{now.minute:02d} {'AM' if now.hour < 12 else 'PM'}"
+
+
+def write(msg):
+    """
+    Append one line to the log file, stamped "<day> H:MM AM/PM": the three-letter
+    day name, then the 12-hour time with no zero padding on the hour, for example:
+        Wed 9:05 AM  your message
+        Wed 3:45 PM  your message
+    Can be called from anywhere, including edit(). A logging problem never
+    stops the script.
+    """
+    stamp = timestamp()
+    try:
+        with open(LOG_FILE, "a", encoding="utf-8") as f:
+            f.write(f"{stamp}  {msg}\n")
+    except OSError as e:
+        print(f"(could not write to {LOG_FILE}: {e})")
 
 # Friendly names for database app ids. Run with --debug to see the id of any app
 # not listed here, then add it. Unlisted apps appear in n.app under their raw id.
@@ -100,14 +127,22 @@ class Notification:
 #   if n.source == "screen":                    ...  # only alerts the database never saw
 #   if "keyword" in n.text:                     ...
 #   if n.matches(r"\bout\b"):                   ...  # whole word
+#   write("text")                               append a timestamped line to the log file
+#   timestamp()                                 the current time as text, e.g. "Wed 3:45 PM"
 # ===========================================================================
 def edit(n):
     # Tractive: not in the database, so it arrives from the screen. Match by text.
     if n.matches(r"safe zone"):
-        if n.matches(r"back in|entered|inside"):
-            n.sound, n.subtitle = "shenah-in", "Shénah is inside"
-        elif n.matches(r"out|left|exited"):
-            n.sound, n.subtitle = "shenah-out", "Shénah is out"
+        stamp = timestamp()
+        msg = None
+        if n.matches(r"back in|entered"):
+            msg = stamp + ": Shénah is in"
+            n.sound, n.subtitle = "shenah-in", msg
+        elif n.matches(r"\b(out|left|exited)\b"):
+            msg = stamp + ": Shénah is out"
+            n.sound, n.subtitle = "shenah-out", msg
+        if msg:
+            write(msg)
         return
 
     # Everything else: prepend "Body:  " to the body
