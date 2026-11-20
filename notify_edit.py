@@ -132,21 +132,23 @@ class Notification:
 # ===========================================================================
 def edit(n):
     # Tractive: not in the database, so it arrives from the screen. Match by text.
+    msg = None
     if n.matches(r"safe zone"):
         stamp = timestamp()
-        msg = None
+        # tractive
         if n.matches(r"back in|entered"):
             msg = stamp + ": Shénah is in"
             n.sound, n.subtitle = "shenah-in", msg
         elif n.matches(r"\b(out|left|exited)\b"):
             msg = stamp + ": Shénah is out"
             n.sound, n.subtitle = "shenah-out", msg
-        if msg:
-            write(msg)
-        return
-
+    if n.matches(r"Apple News"):
+        print("Ignored Apple News-------------------")
+        n.send = False
+    if msg:
+        write(msg)
     # Everything else: prepend "Body:  " to the body
-    n.body = "Body:  " + n.body
+    n.body = "Body:  " + n.body)
 
 
 # ===========================================================================

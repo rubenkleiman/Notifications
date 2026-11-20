@@ -1,6 +1,6 @@
 -- Verbose probe: prints window names and, for every UI element, its role,
 -- title, description and value. Errors are reported, not hidden.
--- Run while the Tractive alert is visible:  osascript dump_alert2.applescript
+-- Run while the Tractive alert is visible:  osascript dump_alert.applescript
 
 on clean(x)
 	try
