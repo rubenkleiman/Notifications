@@ -66,6 +66,16 @@ APP_NAMES = {
     "org.mozilla.firefox": "firefox",
 }
 
+# Notifications containing any of these strings are ignored completely: edit() is
+# not called and nothing is posted. Matching is case-insensitive and looks for the
+# string anywhere in the title, subtitle, body or app id (database app id, e.g.
+# "com.apple.tmhelperagent"). Empty strings are ignored.
+BLACKLIST = [
+    # "tmhelperagent",      # Time Machine
+    # "diskarbitration",    # disk notices
+    # "some text in a body",
+]
+
 # Label lines macOS shows above a title on screen (lowercase). Add other languages here.
 LABELS = {"time sensitive", "critical"}
 
@@ -183,6 +193,12 @@ def classify(app_id):
 
 
 def pre_edit(source, app_id, title, subtitle, body, raw):
+    """Build the Notification for edit(), or return None if it is blacklisted."""
+    haystack = "\n".join((app_id or "", title, subtitle, body)).lower()
+    for entry in BLACKLIST:
+        if entry and entry.lower() in haystack:
+            dbg(f"skip (blacklisted by {entry!r}): {title!r} | {body!r}")
+            return None
     if source == "db":
         app, site = classify(app_id)
     else:
@@ -313,6 +329,8 @@ def post(n):
 def process(source, app_id, title, sub, body, raw):
     """Run edit() on one notification. True if an edited notification was posted."""
     n = pre_edit(source, app_id, title, sub, body, raw)
+    if n is None:                      # blacklisted
+        return False
     before = n.state()
     dbg(f"RECEIVED  source={source} app_id={app_id!r} -> app={n.app!r} site={n.site!r}")
     dbg(f"          title={title!r} subtitle={sub!r} body={body!r}")
