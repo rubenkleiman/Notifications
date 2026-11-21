@@ -20,3 +20,8 @@ Run python3 notify_edit.py for the normal mode, where Tractive comes from the sc
 Try python3 notify_edit.py --screen-all only if you want screen-only notifications beyond Tractive. Run it with --debug first, and watch for unexpected alerts being edited. I’m not sure what other texts appear in that window, such as when the Notification Center panel is open.
 
 In --screen-all mode, any osascript test notification will be edited too, because the screen can’t tell which app posted it. The [Edited] title prefix still prevents loops.
+
+# Dumping notifications
+
+    `python3 dump_notifications.py        # newest 20 database records`
+    `python3 dump_notifications.py 50     # newest 50`
